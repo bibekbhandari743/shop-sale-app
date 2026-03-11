@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop Sales Manager</title>
+
+<style>
+
+body{
+font-family:Arial;
+margin:0;
+background:#f4f6f9;
+}
+
+header{
+background:#2c3e50;
+color:white;
+text-align:center;
+padding:15px;
+font-size:22px;
+}
+
+.container{
+padding:15px;
+}
+
+.dashboard{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:15px;
+}
+
+.iconCard{
+background:white;
+padding:20px;
+border-radius:10px;
+text-align:center;
+box-shadow:0 2px 8px rgba(0,0,0,0.2);
+cursor:pointer;
+}
+
+.icon{
+font-size:35px;
+}
+
+.card{
+background:white;
+padding:15px;
+border-radius:10px;
+box-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+
+input,select{
+width:100%;
+padding:10px;
+margin:8px 0;
+border-radius:5px;
+border:1px solid #ccc;
+}
+
+button{
+width:100%;
+padding:10px;
+background:#27ae60;
+border:none;
+color:white;
+border-radius:5px;
+}
+
+.back{
+background:#e74c3c;
+margin-bottom:10px;
+}
+
+.customer{
+background:#ecf0f1;
+padding:8px;
+margin-bottom:5px;
+border-radius:5px;
+}
+
+.sale{
+background:#e8f8f5;
+padding:10px;
+margin-bottom:6px;
+border-radius:5px;
+}
+
+.creditTag{
+background:red;
+color:white;
+font-size:11px;
+padding:2px 6px;
+border-radius:4px;
+margin-left:5px;
+}
+
+.azFilter button{
+width:auto;
+margin:2px;
+padding:5px 8px;
+font-size:12px;
+background:#3498db;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>Shop Sales Manager</header>
+
+<div class="container">
+
+<div id="dashboard" class="dashboard">
+
+<div class="iconCard" onclick="openPage('addCustomer')">
+<div class="icon">👤</div>
+Add Customer
+</div>
+
+<div class="iconCard" onclick="openPage('customerList')">
+<div class="icon">📋</div>
+Customer List
+</div>
+
+<div class="iconCard" onclick="openPage('newSale')">
+<div class="icon">💰</div>
+New Sale
+</div>
+
+<div class="iconCard" onclick="openPage('todaySales')">
+<div class="icon">🧾</div>
+Today Sales
+</div>
+
+<div class="iconCard" onclick="openPage('cashSales')">
+<div class="icon">💵</div>
+Cash Sales
+</div>
+
+<div class="iconCard" onclick="openPage('creditSales')">
+<div class="icon">💳</div>
+Credit Sales
+</div>
+
+<div class="iconCard" onclick="openPage('summary')">
+<div class="icon">📊</div>
+Summary
+</div>
+
+</div>
+
+<div id="addCustomer" class="card" style="display:none">
+
+<button class="back" onclick="goHome()">Back</button>
+
+<h3>Add Customer</h3>
+
+<input id="cName" placeholder="Customer Name">
+
+<input id="cPhone" placeholder="Phone Number">
+
+<button onclick="addCustomer()">Save</button>
+
+</div>
+
+<div id="customerList" class="card" style="display:none">
+
+<button class="back" onclick="goHome()">Back</button>
+
+<h3>Customer List</h3>
+
+<input id="searchBox" placeholder="Search Name or Phone" onkeyup="searchCustomer()">
+
+<div class="azFilter" id="azFilter"></div>
+
+<div id="customerData"></div>
+
+</div>
+
+<div id="newSale" class="card" style="display:none">
+
+<button class="back" onclick="goHome()">Back</button>
+
+<h3>New Sale</h3>
+
+<select id="saleCustomer"></select>
+
+<input id="product" placeholder="Product Name">
+
+<input id="price" type="number" placeholder="Price">
+
+<select id="payment">
+<option>Cash</option>
+<option>Credit</option>
+</select>
+
+<button onclick="addSale()">Add Sale</button>
+
+</div>
+
+<div id="todaySales" class="card" style="display:none">
+
+<button class="back" onclick="goHome()">Back</button>
+
+<h3>Today Sales</h3>
+
+<div id="salesList"></div>
+
+</div>
+
+<div id="cashSales" class="card" style="display:none">
+
+<button class="back" onclick="goHome()">Back</button>
+
+<h3>Cash Sales</h3>
+
+<div id="cashList"></div>
+
+</div>
+
+<div id="creditSales" class="card" style="display:none">
+
+<button class="back" onclick="goHome()">Back</button>
+
+<h3>Credit Sales</h3>
+
+<div id="creditList"></div>
+
+</div>
+
+<div id="summary" class="card" style="display:none">
+
+<button class="back" onclick="goHome()">Back</button>
+
+<h3>Summary</h3>
+
+Cash: Rs <span id="cashTotal">0</span><br><br>
+
+Credit: Rs <span id="creditTotal">0</span>
+
+</div>
+
+</div>
+
+<script>
+
+let customers=JSON.parse(localStorage.getItem("customers"))||[]
+let sales=JSON.parse(localStorage.getItem("sales"))||[]
+
+function save(){
+
+localStorage.setItem("customers",JSON.stringify(customers))
+localStorage.setItem("sales",JSON.stringify(sales))
+
+}
+
+function openPage(id){
+
+document.getElementById("dashboard").style.display="none"
+
+let pages=["addCustomer","customerList","newSale","todaySales","cashSales","creditSales","summary"]
+
+pages.forEach(p=>{
+
+document.getElementById(p).style.display="none"
+
+})
+
+document.getElementById(id).style.display="block"
+
+renderCustomers()
+renderSales()
+
+}
+
+function goHome(){
+
+let pages=["addCustomer","customerList","newSale","todaySales","cashSales","creditSales","summary"]
+
+pages.forEach(p=>{
+
+document.getElementById(p).style.display="none"
+
+})
+
+document.getElementById("dashboard").style.display="grid"
+
+}
+
+function addCustomer(){
+
+let name=document.getElementById("cName").value
+let phone=document.getElementById("cPhone").value
+
+if(name=="") return
+
+customers.push({name,phone})
+
+document.getElementById("cName").value=""
+document.getElementById("cPhone").value=""
+
+save()
+
+renderCustomers()
+
+}
+
+function renderCustomers(){
+
+let list=document.getElementById("customerData")
+let select=document.getElementById("saleCustomer")
+
+list.innerHTML=""
+select.innerHTML=""
+
+customers.forEach(c=>{
+
+list.innerHTML+=`<div class="customer">${c.name} (${c.phone})</div>`
+
+select.innerHTML+=`<option>${c.name}</option>`
+
+})
+
+createAZ()
+
+}
+
+function createAZ(){
+
+let az="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+let container=document.getElementById("azFilter")
+
+container.innerHTML=""
+
+for(let l of az){
+
+container.innerHTML+=`<button onclick="filterAZ('${l}')">${l}</button>`
+
+}
+
+}
+
+function filterAZ(letter){
+
+let list=document.getElementById("customerData")
+
+list.innerHTML=""
+
+customers.forEach(c=>{
+
+if(c.name.toUpperCase().startsWith(letter)){
+
+list.innerHTML+=`<div class="customer">${c.name} (${c.phone})</div>`
+
+}
+
+})
+
+}
+
+function searchCustomer(){
+
+let q=document.getElementById("searchBox").value.toLowerCase()
+
+let list=document.getElementById("customerData")
+
+list.innerHTML=""
+
+customers.forEach(c=>{
+
+if(c.name.toLowerCase().includes(q)||c.phone.includes(q)){
+
+list.innerHTML+=`<div class="customer">${c.name} (${c.phone})</div>`
+
+}
+
+})
+
+}
+
+function addSale(){
+
+let customer=document.getElementById("saleCustomer").value
+let product=document.getElementById("product").value
+let price=document.getElementById("price").value
+let payment=document.getElementById("payment").value
+
+if(product==""||price=="") return
+
+sales.push({
+customer,
+product,
+price:Number(price),
+payment,
+date:new Date().toLocaleDateString()
+})
+
+document.getElementById("product").value=""
+document.getElementById("price").value=""
+
+save()
+
+renderSales()
+
+}
+
+function renderSales(){
+
+let today=document.getElementById("salesList")
+let cashList=document.getElementById("cashList")
+let creditList=document.getElementById("creditList")
+
+today.innerHTML=""
+cashList.innerHTML=""
+creditList.innerHTML=""
+
+let cash=0
+let credit=0
+
+sales.forEach(s=>{
+
+let tag=s.payment=="Credit" ? `<span class="creditTag">CREDIT</span>`:""
+
+let html=`
+
+<div class="sale">
+
+<b>${s.product}</b> - Rs ${s.price}<br>
+
+Customer: ${s.customer} ${tag}
+
+</div>
+
+`
+
+today.innerHTML+=html
+
+if(s.payment=="Cash"){
+cash+=s.price
+cashList.innerHTML+=html
+}else{
+credit+=s.price
+creditList.innerHTML+=html
+}
+
+})
+
+document.getElementById("cashTotal").innerText=cash
+document.getElementById("creditTotal").innerText=credit
+
+}
+
+renderCustomers()
+renderSales()
+
+</script>
+
+</body>
+</html>
